@@ -5,8 +5,9 @@ const authRoutes = require('./src/routes/authRoutes');
 
 const app = express();
 
-
+// If deployed behind a proxy (Render), trust it so secure cookies work
 app.set('trust proxy', 1);
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
@@ -14,6 +15,7 @@ app.use(cors({
   credentials: true
 }));
 
+app.get('/', (req, res) => res.send('EzySplit API is running'));
 app.get('/api/health', (_, res) => res.json({ ok: true }));
 
 app.use('/api/auth', authRoutes);
