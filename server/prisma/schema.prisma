@@ -15,3 +15,15 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model Expense {
+  id           Int      @id @default(autoincrement())
+  title        String
+  amount       Float
+  paidBy       String
+  category     String?
+  date         DateTime
+  participants Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

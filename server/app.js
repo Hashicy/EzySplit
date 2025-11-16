@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const authRoutes = require('./src/routes/authRoutes');
+const expenseRoutes = require('./src/routes/expenseRoutes');
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.get('/', (req, res) => res.send('EzySplit API is running'));
 app.get('/api/health', (_, res) => res.json({ ok: true }));
 
 app.use('/api/auth', authRoutes);
+app.use('/api/expenses', expenseRoutes);
 
 // Basic error handler
 app.use((err, req, res, next) => {
