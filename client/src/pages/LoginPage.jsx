@@ -12,8 +12,8 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     try {
-      await login(form.email, form.password);
-      navigate('/dashboard');
+  await login(form.email, form.password);
+  navigate('/expenses', { state: { flash: 'Logged in' } });
     } catch (err) {
       setError(err?.response?.data?.error || 'Login failed');
     }

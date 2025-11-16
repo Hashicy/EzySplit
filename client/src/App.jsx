@@ -3,6 +3,7 @@ import HomePage from './pages/HomePage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import SignupPage from './pages/SignupPage.jsx';
 import Dashboard from './pages/Dashboard.jsx';
+import ExpensesPage from './pages/ExpensesPage.jsx';
 import Navbar from './components/Navbar.jsx';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 
@@ -26,6 +27,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/expenses"
+          element={
+            <ProtectedRoute>
+              <ExpensesPage />
             </ProtectedRoute>
           }
         />

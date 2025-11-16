@@ -20,6 +20,7 @@ export default function Navbar() {
           <>
             <span className="user-email">{user.email}</span>
             <Link to="/dashboard" className="nav-link">Dashboard</Link>
+            <Link to="/expenses" className="nav-link">Expenses</Link>
             <button onClick={handleLogout} className="btn">Logout</button>
           </>
         ) : (

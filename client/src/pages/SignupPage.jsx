@@ -12,8 +12,8 @@ export default function SignupPage() {
     e.preventDefault();
     setError('');
     try {
-      await signup(form.name, form.email, form.password);
-      navigate('/dashboard');
+  await signup(form.name, form.email, form.password);
+  navigate('/expenses', { state: { flash: 'Account created' } });
     } catch (err) {
       setError(err?.response?.data?.error || 'Sign up failed');
     }
