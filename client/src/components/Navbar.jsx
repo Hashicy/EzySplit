@@ -14,12 +14,12 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       <div className="nav-left">
-        <Link to="/" className="brand">EzySplit</Link>
+        <Link to={user ? '/dashboard' : '/'} className="brand">EzySplit</Link>
       </div>
       <div className="nav-right">
         {user ? (
           <>
-            <span className="user-email">{user.email}</span>
+            <span className="user-email">{user.name}</span>
             <Link to="/dashboard" className="nav-link">Dashboard</Link>
             <Link to="/expenses" className="nav-link">Expenses</Link>
             <button onClick={handleLogout} className="btn">Logout</button>

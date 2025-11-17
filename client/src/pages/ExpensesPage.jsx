@@ -8,11 +8,16 @@ import SearchBar from '../components/SearchBar.jsx';
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState([]);
   const [meta, setMeta] = useState({ page: 1, limit: 10, total: 0 });
+  const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [form, setForm] = useState({ title: '', amount: '', paidBy: '', category: '', date: '', participants: '' });
   const [editingId, setEditingId] = useState(null);
   const [filters, setFilters] = useState({ category: '', paidBy: '', from: '', to: '' });
+  const [sortField, setSortField] = useState('date');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [showFilters, setShowFilters] = useState(false);
+  const [showSort, setShowSort] = useState(false);
   const [flash, setFlash] = useState('');
   const location = useLocation();
 
@@ -23,7 +28,7 @@ export default function ExpensesPage() {
   const load = async (page = 1) => {
     setLoading(true);
     try {
-      const params = { page, limit: meta.limit, search, ...filters };
+  const params = { page, limit: pageSize || meta.limit, search, sort: sortField, order: sortOrder, ...filters };
       // remove empty params
       Object.keys(params).forEach(k => { if (params[k] === '' || params[k] == null) delete params[k]; });
       const res = await getExpenses(params);
@@ -76,7 +81,8 @@ export default function ExpensesPage() {
   };
 
   const onApplyFilters = () => {
-    load(1);
+  load(1);
+  setShowFilters(false);
   };
 
   return (
@@ -131,14 +137,59 @@ export default function ExpensesPage() {
       </section>
 
       <section className="filters">
-        <SearchBar value={search} onChange={setSearch} onSearch={()=>load(1)} />
-        <div className="filter-controls">
-          <input placeholder="Category" value={filters.category} onChange={e=>setFilters({...filters,category:e.target.value})} />
-          <input placeholder="Paid by" value={filters.paidBy} onChange={e=>setFilters({...filters,paidBy:e.target.value})} />
-          <input type="date" placeholder="From" value={filters.from} onChange={e=>setFilters({...filters,from:e.target.value})} />
-          <input type="date" placeholder="To" value={filters.to} onChange={e=>setFilters({...filters,to:e.target.value})} />
-          <button onClick={onApplyFilters}>Apply</button>
+        <div className="filters-top">
+          <SearchBar value={search} onChange={setSearch} onSearch={()=>load(1)} />
+          <div className="toggle-group">
+            <button className="sort-toggle" onClick={()=>setShowSort(s=>!s)}>{showSort ? 'Hide sort' : 'Sort'}</button>
+            <button className="filter-toggle" onClick={()=>setShowFilters(s=>!s)}>{showFilters ? 'Hide filters' : 'Filters'}</button>
+          </div>
         </div>
+
+        {showSort && (
+          <div className="sort-panel">
+            <div className="sort-control">
+              <label htmlFor="sortField">Sort by</label>
+              <select id="sortField" value={sortField} onChange={e=>{ setSortField(e.target.value); load(1); }}>
+                <option value="date">Date</option>
+                <option value="amount">Amount</option>
+                <option value="title">Title</option>
+                <option value="paidBy">Paid by</option>
+              </select>
+            </div>
+            <div className="sort-control">
+              <label htmlFor="sortOrder">Order</label>
+              <select id="sortOrder" value={sortOrder} onChange={e=>{ setSortOrder(e.target.value); load(1); }}>
+                <option value="desc">Newest first</option>
+                <option value="asc">Oldest first</option>
+              </select>
+            </div>
+          </div>
+        )}
+
+        {showFilters && (
+          <div className="filter-controls">
+            <div className="filter-item">
+              <label htmlFor="filterCategory">Category</label>
+              <input id="filterCategory" placeholder="Category" value={filters.category} onChange={e=>setFilters({...filters,category:e.target.value})} />
+            </div>
+
+            <div className="filter-item">
+              <label htmlFor="filterPaidBy">Paid by</label>
+              <input id="filterPaidBy" placeholder="Paid by" value={filters.paidBy} onChange={e=>setFilters({...filters,paidBy:e.target.value})} />
+            </div>
+
+            <div className="filter-item">
+              <label htmlFor="filterFrom">From</label>
+              <input id="filterFrom" type="date" value={filters.from} onChange={e=>setFilters({...filters,from:e.target.value})} />
+            </div>
+
+            <div className="filter-item">
+              <label htmlFor="filterTo">To</label>
+              <input id="filterTo" type="date" value={filters.to} onChange={e=>setFilters({...filters,to:e.target.value})} />
+            </div>
+            <button className="apply-btn" onClick={onApplyFilters}>Apply</button>
+          </div>
+        )}
       </section>
 
       {loading ? (
@@ -162,9 +213,33 @@ export default function ExpensesPage() {
           )}
 
           <div className="pagination">
-            <button disabled={meta.page<=1} onClick={()=>load(meta.page-1)}>Previous</button>
-            <span>Page {meta.page}</span>
-            <button disabled={meta.page*meta.limit>=meta.total} onClick={()=>load(meta.page+1)}>Next</button>
+            <div className="pager">
+              <button className="pager-btn" disabled={meta.page<=1} onClick={()=>load(meta.page-1)}>Prev</button>
+
+              {/* render page numbers */}
+              {(() => {
+                const totalPages = Math.max(1, Math.ceil((meta.total || 0) / (pageSize || meta.limit)));
+                const pages = [];
+                const start = Math.max(1, meta.page - 2);
+                const end = Math.min(totalPages, meta.page + 2);
+                for (let p = start; p <= end; p++) pages.push(p);
+                return pages.map(p => (
+                  <button key={p} className={`pager-btn ${p===meta.page? 'active':''}`} onClick={()=>load(p)}>{p}</button>
+                ));
+              })()}
+
+              <button className="pager-btn" disabled={meta.page* (pageSize || meta.limit) >= meta.total} onClick={()=>load(meta.page+1)}>Next</button>
+            </div>
+
+            <div className="page-size">
+              <label htmlFor="pageSize">Per page</label>
+              <select id="pageSize" value={pageSize} onChange={e=>{ setPageSize(Number(e.target.value)); load(1); }}>
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
           </div>
         </section>
       )}

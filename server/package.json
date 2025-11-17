@@ -7,7 +7,9 @@
     "dev": "nodemon server.js",
     "start": "node server.js",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:migrate": "prisma migrate dev",
+    "seed": "node prisma/seed.js",
+    "test": "jest"
   },
   "dependencies": {
     "@prisma/client": "^5.19.1",
@@ -20,6 +22,7 @@
     "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
+    "jest": "^29.7.0",
     "nodemon": "^3.1.4",
     "prisma": "^5.22.0"
   }

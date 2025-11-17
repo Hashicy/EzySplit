@@ -1,0 +1,13 @@
+.home { padding: 36px 12px; }
+.hero { display: flex; gap: 24px; align-items: center; margin-bottom: 28px; }
+.hero-left { flex: 1; }
+.hero-right { width: 320px; }
+.hero h1 { font-size: 32px; margin: 0 0 12px; }
+.hero p { color: #444; margin: 0 0 16px; }
+.cta .btn { margin-right: 10px; }
+.mockup { height: 220px; background: linear-gradient(135deg,#f6f9fc,#e9f1fb); border-radius: 12px; display:flex;align-items:center;justify-content:center;color:#7a8ba6 }
+.features { margin: 24px 0; }
+.feature-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 16px; }
+.feature { background: #fff; padding: 14px; border-radius: 10px; box-shadow: 0 6px 18px rgba(2,6,23,0.04); }
+.how { margin: 20px 0; }
+.testimonials { margin-top: 18px; font-style: italic; color:#2b4354 }

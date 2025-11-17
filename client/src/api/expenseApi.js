@@ -10,5 +10,6 @@ export const getExpenses = (params) => api.get('/api/expenses', { params }).then
 export const getExpense = (id) => api.get(`/api/expenses/${id}`).then(r => r.data);
 export const updateExpense = (id, data) => api.put(`/api/expenses/${id}`, data).then(r => r.data);
 export const deleteExpense = (id) => api.delete(`/api/expenses/${id}`).then(r => r.data);
+export const getSummarySplit = () => api.get('/api/expenses/summary/all/split').then(r => r.data);
 
 export default api;
