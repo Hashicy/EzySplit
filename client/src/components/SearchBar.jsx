@@ -1,4 +1,5 @@
 import React from 'react';
+import '../styles/SearchBar.css';
 
 export default function SearchBar({ value, onChange, onSearch }) {
   const onKeyDown = (e) => {

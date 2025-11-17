@@ -1,0 +1,6 @@
+.navbar { display:flex; justify-content:space-between; padding:12px 20px; border-bottom:1px solid #eef2ff; align-items:center; background:linear-gradient(90deg,#ffffff,#fbfeff) }
+.nav-right { display:flex; gap:12px; align-items:center }
+.brand { font-weight:700; font-size:1.1rem; color:#0f172a }
+.nav-link { color:#334155; text-decoration:none }
+.btn { padding:8px 12px; border-radius:8px; background:#06b6d4; color:#fff; border:none }
+.btn-primary { background:#0ea5a4 }

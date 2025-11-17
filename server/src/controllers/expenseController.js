@@ -24,7 +24,6 @@ exports.getExpenses = async (req, res, next) => {
   try {
     const q = parseQuery(req.query);
     const where = {};
-    // Build parameterized SQL for case-insensitive search and filters
     const params = [];
     const parts = [];
     if (q.search) {

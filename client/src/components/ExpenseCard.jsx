@@ -1,4 +1,5 @@
 import React from 'react';
+import '../styles/ExpenseCard.css';
 
 export default function ExpenseCard({ expense }) {
   return (

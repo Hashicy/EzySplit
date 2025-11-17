@@ -1,0 +1,4 @@
+.search-bar { display:flex; gap:8px; align-items:center }
+.search-bar input { padding:8px 10px; border-radius:8px; border:1px solid #d1d5db }
+.search-bar button { padding:8px 12px; background:#06b6d4; color:#fff; border:none; border-radius:8px; cursor:pointer }
+.search-bar button:hover { background:#0891b2 }
