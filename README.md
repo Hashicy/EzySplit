@@ -1,265 +1,256 @@
-EzySplit — Smart Expense Sharing Web App
+# EzySplit — Smart Expense Sharing Web App
 
-Effortlessly track, manage, and split shared expenses with friends, roommates, and teams.
+EzySplit is a production-oriented full-stack web application to help groups track, manage, and split shared expenses fairly. It provides secure authentication, intuitive UI, advanced list querying (search, filter, sort, pagination), and automated settlement calculations to compute who owes whom the minimal amounts.
 
-🚀 Overview
+Table of Contents
+- About
+- Key Features
+- Technology Stack
+- Getting Started
+  - Prerequisites
+  - Environment Variables
+  - Local Development
+  - Building & Production
+- API Overview
+  - Authentication Endpoints
+  - Expense Endpoints
+  - Querying / Pagination / Sorting
+- Data Models (Mongoose)
+- Splitting & Settlement Logic
+- Testing
+- Deployment
+- Contributing
+- License
+- Contact
 
-EzySplit is a full-stack expense sharing platform built with React + Node.js + MongoDB.
-It allows users to securely manage shared expenses, split amounts among participants, and compute minimal settlements.
+About
+-----
+EzySplit is targeted at roommates, groups, and teams who need a simple but robust system to create expenses, share them across participants, and compute net balances and minimal settlements. The project is designed to be production-ready with sensible defaults for authentication, API design, and deployment practices.
 
-The app includes:
+Key Features
+------------
+- User registration and JWT-based authentication (HTTP-only cookies)
+- Full CRUD for expenses
+- Advanced list operations: search, filtering, sorting, pagination
+- Per-expense share calculation and global minimal settlement (min-cash-flow)
+- Responsive React frontend with protected routes
+- Clean RESTful API with clear JSON responses
+- Tests for backend (Jest) and frontend (Vitest + React Testing Library)
 
-✔ Secure authentication
-✔ Full expense CRUD
-✔ Search, filter, sort & pagination
-✔ Settlement algorithm
-✔ Clean UI with protected routes
-✔ Production-ready deployment setup
-
-🧰 Tech Stack
+Technology Stack
+----------------
 Frontend
-
-React (Vite)
-
-React Router
-
-Axios
-
-TailwindCSS / CSS Modules
-
-Context API / Zustand
+- React (Vite)
+- React Router
+- Axios
+- TailwindCSS (or CSS Modules)
+- Context API or Zustand for state
 
 Backend
-
-Node.js
-
-Express.js
-
-MongoDB + Mongoose
-
-JWT (HTTP-only cookies)
-
-bcrypt (password hashing)
-
-DevOps
-
-Vercel (Frontend)
-
-Render (Backend)
-
-MongoDB Atlas (Database)
-
-Git + GitHub
-
-✨ Features
-🔐 Authentication
-
-Register, Login, Logout
-
-Password hashing with bcrypt
-
-JWT stored in secure HTTP-only cookies
-
-Protected APIs and protected frontend routes
-
-🧾 Expense Management
-
-Add, edit, delete expenses
-
-Each expense stores:
-
-title
-
-amount
-
-paidBy
-
-category
-
-date
-
-participants[]
-
-owner (userId)
-
-Auto timestamps (createdAt, updatedAt)
-
-🔍 Advanced Querying
-
-Search – title, category, paidBy
-
-Filter – category, paidBy, date range
-
-Sort – amount, date, title, createdAt
-
-Pagination – page & limit
-
-💸 Settlement Calculator
-
-Computes net balances for all participants
-
-Minimal-settlement algorithm (min cash flow)
-
-📱 UI/UX
-
-Responsive, clean interface
-
-Public routes: Home, Login, Signup
-
-Protected routes: Dashboard, Expenses, Profile
-
-Logout + session persistence
-
-📦 Project Structure
-Backend (/server)
-server/
- ├─ src/
- │   ├─ models/
- │   │   ├─ User.js
- │   │   └─ Expense.js
- │   ├─ routes/
- │   │   ├─ auth.routes.js
- │   │   └─ expense.routes.js
- │   ├─ middleware/
- │   │   └─ authMiddleware.js
- │   ├─ utils/
- │   │   └─ settlement.js
- │   ├─ controllers/
- │   ├─ config/
- │   └─ server.js
- ├─ package.json
- └─ .env
-
-Frontend (/client)
-client/
- ├─ src/
- │   ├─ components/
- │   ├─ pages/
- │   ├─ context/
- │   ├─ hooks/
- │   ├─ utils/
- │   └─ App.jsx
- ├─ package.json
- └─ .env
-
-🗄️ API Endpoints
-Auth
-Method	Endpoint	Description
-POST	/api/auth/register	Register new user
-POST	/api/auth/login	Login + issue JWT cookie
-GET	/api/auth/me	Get authenticated user
-POST	/api/auth/logout	Clear JWT cookie
-Expenses
-Method	Endpoint	Description
-POST	/api/expenses	Create expense
-GET	/api/expenses	List with search/filter/sort/pagination
-GET	/api/expenses/:id	Get expense by ID
-PUT	/api/expenses/:id	Update expense
-DELETE	/api/expenses/:id	Delete expense
-
-Query params supported:
-
-?search=
-&category=
-&paidBy=
-&sort=
-&order=
-&page=
-&limit=
-&from=
-&to=
-
-🧮 Settlement Logic
-
-Algorithm steps:
-
-Calculate each participant’s total paid amount.
-
-Compute each participant’s fair share.
-
-Determine who owes whom.
-
-Apply minimal cash-flow algorithm to reduce transfers.
-
-Result example:
-
-[
-  { "from": "A", "to": "B", "amount": 500 },
-  { "from": "C", "to": "A", "amount": 200 }
-]
-
-🧪 Testing
-
-Backend: Jest + Supertest
-
-Frontend: Vitest + React Testing Library
-
-Sample test command:
-
-npm test
-
-🚀 Deployment
-Frontend (Vercel)
-npm run build
-vercel deploy
-
-Backend (Render)
-
-Add environment variables
-
-Add MongoDB URI
-
-Set build/run command
-
-Enable CORS with credentials
-
-Shared .env Variables
-
-Backend
-
-MONGO_URI=
-JWT_SECRET=
-COOKIE_SECRET=
-CLIENT_URL=
-
-
-Frontend
-
-VITE_API_URL=
-
-🗂️ Future Enhancements
-
-Group-based expense rooms
-
-Invite via email + notifications
-
-Charts & analytics (monthly trends, categories)
-
-Dark mode
-
-Mobile app (React Native)
-
-Receipt upload + OCR
-
-📚 Setup Instructions
-1. Clone the repo
-git clone https://github.com/your-username/EzySplit.git
+- Node.js + Express
+- MongoDB Atlas + Mongoose
+- JSON Web Tokens (JWT) stored in Secure HTTP-only cookies
+- bcrypt for password hashing
+- Validation with Joi/Zod or similar
+
+Testing & CI
+- Jest (backend)
+- Vitest + React Testing Library (frontend)
+
+Deployment
+- Frontend: Vercel
+- Backend: Render (or preferred Node host)
+- Database: MongoDB Atlas
+- Version control: Git + GitHub
+
+Getting Started
+---------------
+Prerequisites
+- Node.js 18+ and npm/yarn/pnpm
+- MongoDB Atlas cluster (or local MongoDB)
+- A browser for the frontend
+- (Optional) Render / Vercel accounts for deployment
+
+Clone the repository
+```bash
+git clone https://github.com/Hashicy/EzySplit.git
 cd EzySplit
+```
 
-2. Install dependencies
-cd server && npm install
-cd ../client && npm install
+Environment Variables
+Create a .env file in the backend folder (e.g. ./server/.env). Example variables:
 
-3. Start development servers
+```
+PORT=4000
+MONGO_URI=mongodb+srv://<user>:<pass>@cluster0.mongodb.net/ezy_split?retryWrites=true&w=majority
+JWT_SECRET=your_long_random_jwt_secret
+JWT_EXPIRES_IN=7d
+COOKIE_SECURE=true # set to true in production (HTTPS)
+CORS_ORIGIN=https://yourfrontenddomain.com
+```
 
+Local Development
+- Install dependencies for both frontend and backend.
+
+From project root (adjust paths if your repo structure separates `client` and `server`):
+
+```bash
+# Backend
+cd server
+npm install
+npm run dev         # runs server with nodemon / ts-node (if configured)
+
+# Frontend
+cd ../client
+npm install
+npm run dev         # runs Vite dev server
+```
+
+Open the frontend URL shown by Vite (usually http://localhost:5173) and the backend on its port (e.g. http://localhost:4000).
+
+Building & Production
+- Build frontend for production and deploy to Vercel (or other hosting).
+- Build backend and deploy to Render (or other Node hosting service).
+- Ensure environment variables are set in production and that cookies are configured as secure and sameSite where appropriate.
+
+API Overview
+------------
+All endpoints return JSON. Protected routes require a valid JWT present in an HTTP-only cookie set by login.
+
+Authentication Endpoints
+- POST /api/auth/register
+  - Body: { name, email, password }
+  - Response: 201 { user }
+- POST /api/auth/login
+  - Body: { email, password }
+  - Response: 200 { user } and sets HTTP-only cookie
+- GET /api/auth/me
+  - Protected: returns current user
+- POST /api/auth/logout
+  - Clears cookie and ends session
+
+Expense Endpoints
+- POST /api/expenses
+  - Create a new expense
+  - Body example:
+    { title, amount, paidBy, participants: [string], category, date }
+- GET /api/expenses
+  - Read list of expenses (supports search/filter/sort/pagination)
+  - Query params:
+    - search (string, matches title/category/paidBy)
+    - category (string)
+    - paidBy (string)
+    - from (ISO date)
+    - to (ISO date)
+    - sort (field, e.g. date, amount, title, createdAt)
+    - order (asc|desc)
+    - page (number)
+    - limit (number)
+  - Response example:
+    {
+      meta: { total: 42, page: 1, limit: 20 },
+      data: [ ...expenses ]
+    }
+- GET /api/expenses/:id
+  - Read a single expense
+- PUT /api/expenses/:id
+  - Update an expense (owner only)
+- DELETE /api/expenses/:id
+  - Delete an expense (owner only)
+
+Querying / Pagination / Sorting
+- Use ?page=1&limit=20&sort=date&order=desc&search=rent to combine operations.
+- Responses include meta with total count to help UI pagination.
+
+Data Models (Mongoose)
+----------------------
+User
+```js
+{
+  name: String,
+  email: { type: String, unique: true, required: true },
+  password: String, // hashed with bcrypt
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+Expense
+```js
+{
+  title: String,
+  amount: Number,
+  paidBy: String,           // user id or display name
+  participants: [String],   // list of participant identifiers (user ids or emails)
+  category: String,
+  date: Date,
+  userId: { type: ObjectId, ref: "User" }, // owner
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+Splitting & Settlement Logic
+----------------------------
+- Per-expense share: amount / participants.length (split equally by default).
+- Net balances: aggregate over all expenses to compute how much each participant is owed/owes.
+- Minimal settlement algorithm: standard min-cash-flow greedy algorithm that repeatedly matches the highest creditor with the highest debtor until all balances are settled. Output is a list of transactions: { from, to, amount }.
+
+Example settlement output:
+```json
+[
+  { "from": "alice@example.com", "to": "carol@example.com", "amount": 25.50 },
+  { "from": "bob@example.com", "to": "carol@example.com", "amount": 10.00 }
+]
+```
+
+Testing
+-------
 Backend:
-
-npm run dev
-
+- Jest is configured for unit and integration tests.
+- Run:
+```bash
+cd server
+npm test
+```
 
 Frontend:
+- Vitest + React Testing Library for components and hooks.
+- Run:
+```bash
+cd client
+npm test
+```
 
-npm run dev
+Deployment
+----------
+- Frontend: Deploy the built static site to Vercel. Ensure API base URL (proxy or environment var) points to the backend.
+- Backend: Deploy to Render (or similar). Configure environment variables (MONGO_URI, JWT_SECRET, CORS_ORIGIN, cookie settings).
+- Database: Use MongoDB Atlas with a secure user and IP access controls.
 
-4. Open in browser
-http://localhost:5173
+Security & Best Practices
+- Store JWT in secure HTTP-only cookies; avoid localStorage for tokens.
+- Hash passwords with bcrypt and use a sufficiently high salt rounds.
+- Validate and sanitize input on both backend and frontend.
+- Use HTTPS in production and set cookie `secure: true` and correct `sameSite`.
+- Rate-limit authentication endpoints and consider account lockout protections.
+
+Contributing
+------------
+Contributions are welcome. Typical workflow:
+- Fork the repository
+- Create a feature branch: git checkout -b feat/my-feature
+- Implement tests and functionality
+- Open a PR with a clear description of changes and motivation
+
+Please follow the code style and include tests for new logic, especially for the settlement algorithm and API behavior.
+
+License
+-------
+MIT
+
+Contact
+-------
+Repository: https://github.com/Hashicy/EzySplit
+Author: Hashicy
+For questions or help setting up, open an issue in the repository or contact via GitHub.
