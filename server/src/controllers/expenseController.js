@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const Expense = require('../models/Expense');
 const { minCashFlow } = require('../utils/settle');
 
 // Helper to parse query params for filtering/sorting/pagination
@@ -12,8 +11,14 @@ exports.createExpense = async (req, res, next) => {
   try {
     const { title, amount, paidBy, category, date, participants } = req.body;
     if (!title || !amount || !paidBy || !date) return res.status(400).json({ error: 'Missing required fields' });
-    const expense = await prisma.expense.create({
-  data: { title, amount: Number(amount), paidBy, category, date: new Date(date), participants: participants || null, userId: req.userId }
+    const expense = await Expense.create({
+      title,
+      amount: Number(amount),
+      paidBy,
+      category,
+      date: new Date(date),
+      participants: participants || [],
+      userId: req.userId
     });
     res.status(201).json({ expense });
   } catch (err) {
@@ -24,42 +29,32 @@ exports.createExpense = async (req, res, next) => {
 exports.getExpenses = async (req, res, next) => {
   try {
     const q = parseQuery(req.query);
-  const where = {};
-    const params = [];
-    const parts = [];
-  // always restrict to the authenticated user's expenses
-  parts.push('userId = ?');
-  params.push(q.userId || req.userId);
+    const filter = { userId: req.userId };
     if (q.search) {
-      const s = q.search.toLowerCase();
-      parts.push("(LOWER(title) LIKE CONCAT('%', ?, '%') OR LOWER(paidBy) LIKE CONCAT('%', ?, '%') OR LOWER(category) LIKE CONCAT('%', ?, '%'))");
-      params.push(s, s, s);
+      const s = q.search;
+      filter.$or = [
+        { title: { $regex: s, $options: 'i' } },
+        { paidBy: { $regex: s, $options: 'i' } },
+        { category: { $regex: s, $options: 'i' } }
+      ];
     }
-  if (q.category) { parts.push('category = ?'); params.push(q.category); }
-  if (q.paidBy) { parts.push('paidBy = ?'); params.push(q.paidBy); }
-    if (q.from) { parts.push('date >= ?'); params.push(q.from); }
-    if (q.to) { parts.push('date <= ?'); params.push(q.to); }
+    if (q.category) filter.category = q.category;
+    if (q.paidBy) filter.paidBy = q.paidBy;
+    if (q.from || q.to) {
+      filter.date = {};
+      if (q.from) filter.date.$gte = new Date(q.from);
+      if (q.to) filter.date.$lte = new Date(q.to);
+    }
 
-    const whereSql = parts.length ? ('WHERE ' + parts.join(' AND ')) : '';
-
-  // Allow only safe sort fields and map friendly names to actual columns
-  const allowedSort = { amount: 'amount', date: 'date', title: 'title', paidBy: 'paidBy', createdAt: 'createdAt' };
-  const sortField = allowedSort[q.sort] || 'date';
-    const sortOrder = q.order && q.order.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+    const allowedSort = { amount: 'amount', date: 'date', title: 'title', paidBy: 'paidBy', createdAt: 'createdAt' };
+    const sortField = allowedSort[q.sort] || 'date';
+    const sortOrder = q.order && q.order.toLowerCase() === 'asc' ? 1 : -1;
 
     const offset = (q.page - 1) * q.limit;
     const limit = q.limit;
 
-    // Count
-  const countSql = `SELECT COUNT(*) as cnt FROM Expense ${whereSql}`;
-    const countRes = await prisma.$queryRawUnsafe(countSql, ...params);
-    const total = countRes && countRes[0] ? Number(countRes[0].cnt) : 0;
-
-    // Data
-  // Note: sortField is mapped from a whitelist above
-  const dataSql = `SELECT * FROM Expense ${whereSql} ORDER BY ${sortField} ${sortOrder} LIMIT ? OFFSET ?`;
-    const dataParams = params.concat([limit, offset]);
-    const expenses = await prisma.$queryRawUnsafe(dataSql, ...dataParams);
+    const total = await Expense.countDocuments(filter);
+    const expenses = await Expense.find(filter).sort({ [sortField]: sortOrder }).skip(offset).limit(limit).lean();
 
     res.json({ meta: { total, page: q.page, limit: q.limit }, data: expenses });
   } catch (err) {
@@ -70,8 +65,8 @@ exports.getExpenses = async (req, res, next) => {
 exports.getExpense = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
-  const expense = await prisma.expense.findUnique({ where: { id } });
-  if (!expense || expense.userId !== req.userId) return res.status(404).json({ error: 'Not found' });
+  const expense = await Expense.findById(req.params.id).lean();
+  if (!expense || String(expense.userId) !== String(req.userId)) return res.status(404).json({ error: 'Not found' });
     res.json({ expense });
   } catch (err) {
     next(err);
@@ -80,14 +75,15 @@ exports.getExpense = async (req, res, next) => {
 
 exports.updateExpense = async (req, res, next) => {
   try {
-    const id = Number(req.params.id);
+    const id = req.params.id;
     const data = req.body;
     if (data.date) data.date = new Date(data.date);
     if (data.amount) data.amount = Number(data.amount);
   // ensure the expense belongs to the user
-  const existing = await prisma.expense.findUnique({ where: { id } });
-  if (!existing || existing.userId !== req.userId) return res.status(404).json({ error: 'Not found' });
-  const expense = await prisma.expense.update({ where: { id }, data });
+  const existing = await Expense.findById(id);
+  if (!existing || String(existing.userId) !== String(req.userId)) return res.status(404).json({ error: 'Not found' });
+  Object.assign(existing, data);
+  const expense = await existing.save();
     res.json({ expense });
   } catch (err) {
     next(err);
@@ -96,10 +92,10 @@ exports.updateExpense = async (req, res, next) => {
 
 exports.deleteExpense = async (req, res, next) => {
   try {
-    const id = Number(req.params.id);
-  const existing = await prisma.expense.findUnique({ where: { id } });
-  if (!existing || existing.userId !== req.userId) return res.status(404).json({ error: 'Not found' });
-  await prisma.expense.delete({ where: { id } });
+    const id = req.params.id;
+  const existing = await Expense.findById(id);
+  if (!existing || String(existing.userId) !== String(req.userId)) return res.status(404).json({ error: 'Not found' });
+  await Expense.deleteOne({ _id: id });
     res.json({ message: 'Deleted' });
   } catch (err) {
     next(err);
@@ -109,9 +105,9 @@ exports.deleteExpense = async (req, res, next) => {
 // Calculate split details for an expense
 exports.getExpenseSplit = async (req, res, next) => {
   try {
-    const id = Number(req.params.id);
-    const expense = await prisma.expense.findUnique({ where: { id } });
-    if (!expense || expense.userId !== req.userId) return res.status(404).json({ error: 'Not found' });
+  const id = req.params.id;
+  const expense = await Expense.findById(id).lean();
+  if (!expense || String(expense.userId) !== String(req.userId)) return res.status(404).json({ error: 'Not found' });
 
     // participants stored as JSON array; include payer if not present
     const participants = Array.isArray(expense.participants) && expense.participants.length ? expense.participants : [expense.paidBy];
@@ -141,7 +137,7 @@ exports.getExpenseSplit = async (req, res, next) => {
 // Calculate overall split for all user's expenses (net balances and minimal settlements)
 exports.getSummarySplit = async (req, res, next) => {
   try {
-    const expenses = await prisma.expense.findMany({ where: { userId: req.userId } });
+  const expenses = await Expense.find({ userId: req.userId }).lean();
 
     const totals = { count: expenses.length, amount: 0 };
     const balances = {}; // map person -> net balance (positive = owed to them)
