@@ -11,8 +11,18 @@ app.set('trust proxy', 1);
 
 app.use(express.json());
 app.use(cookieParser());
+// Normalize origins by removing trailing slashes for robust matching
+const normalizeOrigin = (u) => (typeof u === 'string' ? u.replace(/\/+$/, '') : u);
+const allowedOrigin = normalizeOrigin(process.env.CLIENT_URL);
+
 app.use(cors({
-  origin: process.env.CLIENT_URL,
+  origin: (incomingOrigin, callback) => {
+    // allow non-browser requests (e.g., server-to-server) when no origin
+    if (!incomingOrigin) return callback(null, true);
+    if (normalizeOrigin(incomingOrigin) === allowedOrigin) return callback(null, true);
+    // not allowed
+    return callback(new Error('CORS origin not allowed'), false);
+  },
   credentials: true
 }));
 
