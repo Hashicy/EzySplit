@@ -118,23 +118,23 @@ API Overview
 All endpoints return JSON. Protected routes require a valid JWT present in an HTTP-only cookie set by login.
 
 Authentication Endpoints
-- POST /api/auth/register
+- POST /api/register
   - Body: { name, email, password }
   - Response: 201 { user }
-- POST /api/auth/login
+- POST /api/login
   - Body: { email, password }
   - Response: 200 { user } and sets HTTP-only cookie
-- GET /api/auth/me
+- GET /api/me
   - Protected: returns current user
-- POST /api/auth/logout
+- POST /api/logout
   - Clears cookie and ends session
 
 Expense Endpoints
-- POST /api/expenses
+- POST /api/
   - Create a new expense
   - Body example:
     { title, amount, paidBy, participants: [string], category, date }
-- GET /api/expenses
+- GET /api/
   - Read list of expenses (supports search/filter/sort/pagination)
   - Query params:
     - search (string, matches title/category/paidBy)
@@ -151,11 +151,11 @@ Expense Endpoints
       meta: { total: 42, page: 1, limit: 20 },
       data: [ ...expenses ]
     }
-- GET /api/expenses/:id
+- GET /api/:id
   - Read a single expense
-- PUT /api/expenses/:id
+- PUT /api/:id
   - Update an expense (owner only)
-- DELETE /api/expenses/:id
+- DELETE /api/:id
   - Delete an expense (owner only)
 
 Querying / Pagination / Sorting
