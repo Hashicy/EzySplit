@@ -31,11 +31,15 @@ exports.register = async (req, res, next) => {
 
     const accessToken = signAccessToken(user.id);
     const refreshToken = signRefreshToken(user.id);
-    // Debug: log origin and cookie options to help diagnose cross-site cookie issues
-    console.log('auth.register: origin=', req.headers.origin, 'CLIENT_URL=', process.env.CLIENT_URL);
+  // Debug: log origin
+  console.log('auth.register: origin=', req.headers.origin, 'CLIENT_URL=', process.env.CLIENT_URL);
     // set httpOnly cookies for tokens
-    res.cookie('token', accessToken, getCookieOptions(15 * 60 * 1000, true)); // 15m
-    res.cookie('refreshToken', refreshToken, getCookieOptions()); // 7d
+  // store hashed refresh token on user for rotation/revocation
+  const refreshHash = await bcrypt.hash(refreshToken, 10);
+  user.refreshTokenHash = refreshHash;
+  await user.save();
+  res.cookie('token', accessToken, getCookieOptions(15 * 60 * 1000, true)); // 15m
+  res.cookie('refreshToken', refreshToken, getCookieOptions()); // 7d
     // also expose a non-httpOnly 'session' cookie so client JS can read a session token if needed
     res.cookie('session', accessToken, getCookieOptions(15 * 60 * 1000, false));
     res.status(201).json({
@@ -62,10 +66,14 @@ exports.login = async (req, res, next) => {
     const accessToken = signAccessToken(user.id);
     const refreshToken = signRefreshToken(user.id);
     console.log('auth.login: origin=', req.headers.origin, 'CLIENT_URL=', process.env.CLIENT_URL);
-    res.cookie('token', accessToken, getCookieOptions(15 * 60 * 1000, true));
-    res.cookie('refreshToken', refreshToken, getCookieOptions());
-    res.cookie('session', accessToken, getCookieOptions(15 * 60 * 1000, false));
-    res.json({ user: { id: user.id, email: user.email, name: user.name }, accessToken, refreshToken });
+  // save hashed refresh token
+  const refreshHash = await bcrypt.hash(refreshToken, 10);
+  user.refreshTokenHash = refreshHash;
+  await user.save();
+  res.cookie('token', accessToken, getCookieOptions(15 * 60 * 1000, true));
+  res.cookie('refreshToken', refreshToken, getCookieOptions());
+  res.cookie('session', accessToken, getCookieOptions(15 * 60 * 1000, false));
+  res.json({ user: { id: user.id, email: user.email, name: user.name }, accessToken, refreshToken });
   } catch (err) {
     next(err);
   }
@@ -83,8 +91,19 @@ exports.refresh = async (req, res, next) => {
       return res.status(401).json({ error: 'Invalid refresh token' });
     }
     const userId = payload.userId;
+    const user = await User.findById(userId);
+    if (!user || !user.refreshTokenHash) return res.status(401).json({ error: 'Refresh token revoked' });
+    // verify provided token matches stored hash
+    const matches = await bcrypt.compare(token, user.refreshTokenHash);
+    if (!matches) return res.status(401).json({ error: 'Refresh token revoked or invalid' });
+
+    // rotate tokens: issue new refresh token and replace stored hash
     const accessToken = signAccessToken(userId);
     const refreshToken = signRefreshToken(userId);
+    const newHash = await bcrypt.hash(refreshToken, 10);
+    user.refreshTokenHash = newHash;
+    await user.save();
+
     // set cookies and return tokens
     res.cookie('token', accessToken, getCookieOptions(15 * 60 * 1000, true));
     res.cookie('refreshToken', refreshToken, getCookieOptions());
@@ -112,6 +131,18 @@ exports.logout = async (req, res, next) => {
   res.clearCookie('token', { ...opts, maxAge: 0 });
   res.clearCookie('refreshToken', { ...opts, maxAge: 0 });
   res.clearCookie('session', { ...opts, maxAge: 0 });
+  // also clear stored refresh token hash for this user (if authenticated)
+  try {
+    if (req.userId) {
+      const user = await User.findById(req.userId);
+      if (user) {
+        user.refreshTokenHash = undefined;
+        await user.save();
+      }
+    }
+  } catch (e) {
+    console.error('logout: failed to clear refresh token hash', e);
+  }
   res.json({ message: 'Logged out' });
   } catch (err) {
     next(err);
