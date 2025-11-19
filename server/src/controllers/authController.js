@@ -2,18 +2,18 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-const signToken = (userId) => {
-  return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
-};
+// Access token short lived, refresh token long lived
+const signAccessToken = (userId) => jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '15m' });
+const signRefreshToken = (userId) => jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-const getCookieOptions = () => {
+const getCookieOptions = (ttlMs = 7 * 24 * 60 * 60 * 1000, httpOnly = true) => {
   const isProd = process.env.NODE_ENV === 'production';
   return {
-    httpOnly: true,
-    secure: isProd,           // true on HTTPS
+    httpOnly,
+    secure: isProd,
     sameSite: isProd ? 'none' : 'lax',
     path: '/',
-    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    maxAge: ttlMs
   };
 };
 
@@ -29,11 +29,20 @@ exports.register = async (req, res, next) => {
   const hashed = await bcrypt.hash(password, 10);
   const user = await User.create({ email, password: hashed, name });
 
-    const token = signToken(user.id);
-  // Debug: log origin and cookie options to help diagnose cross-site cookie issues
-  console.log('auth.register: origin=', req.headers.origin, 'CLIENT_URL=', process.env.CLIENT_URL, 'cookieOptions=', getCookieOptions());
-  res.cookie('token', token, getCookieOptions());
-    res.status(201).json({ user: { id: user.id, email: user.email, name: user.name } });
+    const accessToken = signAccessToken(user.id);
+    const refreshToken = signRefreshToken(user.id);
+    // Debug: log origin and cookie options to help diagnose cross-site cookie issues
+    console.log('auth.register: origin=', req.headers.origin, 'CLIENT_URL=', process.env.CLIENT_URL);
+    // set httpOnly cookies for tokens
+    res.cookie('token', accessToken, getCookieOptions(15 * 60 * 1000, true)); // 15m
+    res.cookie('refreshToken', refreshToken, getCookieOptions()); // 7d
+    // also expose a non-httpOnly 'session' cookie so client JS can read a session token if needed
+    res.cookie('session', accessToken, getCookieOptions(15 * 60 * 1000, false));
+    res.status(201).json({
+      user: { id: user.id, email: user.email, name: user.name },
+      accessToken,
+      refreshToken
+    });
   } catch (err) {
     next(err);
   }
@@ -50,11 +59,37 @@ exports.login = async (req, res, next) => {
   const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
 
-    const token = signToken(user.id);
-  // Debug: log origin and cookie options to help diagnose cross-site cookie issues
-  console.log('auth.login: origin=', req.headers.origin, 'CLIENT_URL=', process.env.CLIENT_URL, 'cookieOptions=', getCookieOptions());
-  res.cookie('token', token, getCookieOptions());
-    res.json({ user: { id: user.id, email: user.email, name: user.name } });
+    const accessToken = signAccessToken(user.id);
+    const refreshToken = signRefreshToken(user.id);
+    console.log('auth.login: origin=', req.headers.origin, 'CLIENT_URL=', process.env.CLIENT_URL);
+    res.cookie('token', accessToken, getCookieOptions(15 * 60 * 1000, true));
+    res.cookie('refreshToken', refreshToken, getCookieOptions());
+    res.cookie('session', accessToken, getCookieOptions(15 * 60 * 1000, false));
+    res.json({ user: { id: user.id, email: user.email, name: user.name }, accessToken, refreshToken });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.refresh = async (req, res, next) => {
+  try {
+    // try cookie first then body
+    const token = req.cookies?.refreshToken || req.body?.refreshToken;
+    if (!token) return res.status(401).json({ error: 'No refresh token provided' });
+    let payload;
+    try {
+      payload = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({ error: 'Invalid refresh token' });
+    }
+    const userId = payload.userId;
+    const accessToken = signAccessToken(userId);
+    const refreshToken = signRefreshToken(userId);
+    // set cookies and return tokens
+    res.cookie('token', accessToken, getCookieOptions(15 * 60 * 1000, true));
+    res.cookie('refreshToken', refreshToken, getCookieOptions());
+    res.cookie('session', accessToken, getCookieOptions(15 * 60 * 1000, false));
+    res.json({ accessToken, refreshToken });
   } catch (err) {
     next(err);
   }
@@ -73,8 +108,11 @@ exports.me = async (req, res, next) => {
 exports.logout = async (req, res, next) => {
   try {
     const opts = getCookieOptions();
-    res.clearCookie('token', { ...opts, maxAge: 0 });
-    res.json({ message: 'Logged out' });
+  // clear cookies we set
+  res.clearCookie('token', { ...opts, maxAge: 0 });
+  res.clearCookie('refreshToken', { ...opts, maxAge: 0 });
+  res.clearCookie('session', { ...opts, maxAge: 0 });
+  res.json({ message: 'Logged out' });
   } catch (err) {
     next(err);
   }
