@@ -1,2 +1,0 @@
--- Prisma migration files removed during cleanup. See repository history to restore.
--- Original SQL migration intentionally removed. Restore from git history if needed.
