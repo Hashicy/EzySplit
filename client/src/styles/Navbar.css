@@ -1,6 +1,7 @@
-.navbar { display:flex; justify-content:space-between; padding:12px 20px; border-bottom:1px solid #eef2ff; align-items:center; background:linear-gradient(90deg,#ffffff,#fbfeff) }
-.nav-right { display:flex; gap:12px; align-items:center }
-.brand { font-weight:700; font-size:1.1rem; color:#0f172a }
-.nav-link { color:#334155; text-decoration:none }
-.btn { padding:8px 12px; border-radius:8px; background:#06b6d4; color:#fff; border:none }
-.btn-primary { background:#0ea5a4 }
+.navbar{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-bottom:1px solid var(--border);background:transparent}
+.nav-right{display:flex;gap:12px;align-items:center}
+.brand{font-weight:700;font-size:1.05rem;color:var(--text);display:flex;align-items:center;gap:10px}
+.nav-link{color:var(--muted);text-decoration:none;padding:8px;border-radius:8px}
+.btn{padding:8px 12px;border-radius:10px;border:1px solid transparent;background:var(--accent);color:#fff;cursor:pointer;transition:all .12s ease}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(6,182,212,0.12)}
+.btn-primary{background:var(--primary)}
