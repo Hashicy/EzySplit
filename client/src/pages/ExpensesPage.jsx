@@ -13,10 +13,9 @@ export default function ExpensesPage() {
   const [search, setSearch] = useState('');
   const [form, setForm] = useState({ title: '', amount: '', paidBy: '', category: '', date: '', participants: '' });
   const [editingId, setEditingId] = useState(null);
-  const [filters, setFilters] = useState({ category: '', paidBy: '', from: '', to: '' });
+  // filters removed per request
   const [sortField, setSortField] = useState('date');
   const [sortOrder, setSortOrder] = useState('desc');
-  const [showFilters, setShowFilters] = useState(false);
   const [showSort, setShowSort] = useState(false);
   const [flash, setFlash] = useState('');
   const location = useLocation();
@@ -25,10 +24,16 @@ export default function ExpensesPage() {
     if (location.state?.flash) setFlash(location.state.flash);
   }, [location.state]);
 
-  const load = async (page = 1) => {
+  // load expenses with optional overrides to avoid stale state when calling immediately after setState
+  const load = async (page = 1, overrides = {}) => {
     setLoading(true);
     try {
-  const params = { page, limit: pageSize || meta.limit, search, sort: sortField, order: sortOrder, ...filters };
+      const effectivePage = page;
+      const effectiveLimit = overrides.limit ?? pageSize ?? meta.limit;
+      const effectiveSearch = overrides.search ?? search;
+      const effectiveSort = overrides.sort ?? sortField;
+      const effectiveOrder = overrides.order ?? sortOrder;
+  const params = { page: effectivePage, limit: effectiveLimit, search: effectiveSearch, sort: effectiveSort, order: effectiveOrder };
       // remove empty params
       Object.keys(params).forEach(k => { if (params[k] === '' || params[k] == null) delete params[k]; });
       const res = await getExpenses(params);
@@ -80,10 +85,7 @@ export default function ExpensesPage() {
     } catch (err) { console.error(err); }
   };
 
-  const onApplyFilters = () => {
-  load(1);
-  setShowFilters(false);
-  };
+  // filters removed
 
   return (
     <div className="expenses-page">
@@ -141,7 +143,6 @@ export default function ExpensesPage() {
           <SearchBar value={search} onChange={setSearch} onSearch={()=>load(1)} />
           <div className="toggle-group">
             <button className="sort-toggle" onClick={()=>setShowSort(s=>!s)}>{showSort ? 'Hide sort' : 'Sort'}</button>
-            <button className="filter-toggle" onClick={()=>setShowFilters(s=>!s)}>{showFilters ? 'Hide filters' : 'Filters'}</button>
           </div>
         </div>
 
@@ -149,7 +150,7 @@ export default function ExpensesPage() {
           <div className="sort-panel">
             <div className="sort-control">
               <label htmlFor="sortField">Sort by</label>
-              <select id="sortField" value={sortField} onChange={e=>{ setSortField(e.target.value); load(1); }}>
+              <select id="sortField" value={sortField} onChange={e=>{ const v = e.target.value; setSortField(v); load(1, { sort: v }); }}>
                 <option value="date">Date</option>
                 <option value="amount">Amount</option>
                 <option value="title">Title</option>
@@ -158,7 +159,7 @@ export default function ExpensesPage() {
             </div>
             <div className="sort-control">
               <label htmlFor="sortOrder">Order</label>
-              <select id="sortOrder" value={sortOrder} onChange={e=>{ setSortOrder(e.target.value); load(1); }}>
+              <select id="sortOrder" value={sortOrder} onChange={e=>{ const v = e.target.value; setSortOrder(v); load(1, { order: v }); }}>
                 <option value="desc">Newest first</option>
                 <option value="asc">Oldest first</option>
               </select>
@@ -166,30 +167,7 @@ export default function ExpensesPage() {
           </div>
         )}
 
-        {showFilters && (
-          <div className="filter-controls">
-            <div className="filter-item">
-              <label htmlFor="filterCategory">Category</label>
-              <input id="filterCategory" placeholder="Category" value={filters.category} onChange={e=>setFilters({...filters,category:e.target.value})} />
-            </div>
-
-            <div className="filter-item">
-              <label htmlFor="filterPaidBy">Paid by</label>
-              <input id="filterPaidBy" placeholder="Paid by" value={filters.paidBy} onChange={e=>setFilters({...filters,paidBy:e.target.value})} />
-            </div>
-
-            <div className="filter-item">
-              <label htmlFor="filterFrom">From</label>
-              <input id="filterFrom" type="date" value={filters.from} onChange={e=>setFilters({...filters,from:e.target.value})} />
-            </div>
-
-            <div className="filter-item">
-              <label htmlFor="filterTo">To</label>
-              <input id="filterTo" type="date" value={filters.to} onChange={e=>setFilters({...filters,to:e.target.value})} />
-            </div>
-            <button className="apply-btn" onClick={onApplyFilters}>Apply</button>
-          </div>
-        )}
+  {/* filters removed */}
       </section>
 
       {loading ? (
@@ -233,7 +211,7 @@ export default function ExpensesPage() {
 
             <div className="page-size">
               <label htmlFor="pageSize">Per page</label>
-              <select id="pageSize" value={pageSize} onChange={e=>{ setPageSize(Number(e.target.value)); load(1); }}>
+              <select id="pageSize" value={pageSize} onChange={e=>{ const v = Number(e.target.value); setPageSize(v); load(1, { limit: v }); }}>
                 <option value={5}>5</option>
                 <option value={10}>10</option>
                 <option value={20}>20</option>

@@ -35,15 +35,28 @@ exports.getExpenses = async (req, res, next) => {
       filter.$or = [
         { title: { $regex: s, $options: 'i' } },
         { paidBy: { $regex: s, $options: 'i' } },
-        { category: { $regex: s, $options: 'i' } }
+        { category: { $regex: s, $options: 'i' } },
+        { participants: { $regex: s, $options: 'i' } }
       ];
     }
-    if (q.category) filter.category = q.category;
-    if (q.paidBy) filter.paidBy = q.paidBy;
+    // allow partial, case-insensitive matching for category and paidBy (trim inputs)
+    if (q.category) {
+      const cat = String(q.category).trim();
+      if (cat.length) filter.category = { $regex: cat, $options: 'i' };
+    }
+    if (q.paidBy) {
+      const pb = String(q.paidBy).trim();
+      if (pb.length) filter.paidBy = { $regex: pb, $options: 'i' };
+    }
     if (q.from || q.to) {
       filter.date = {};
       if (q.from) filter.date.$gte = new Date(q.from);
-      if (q.to) filter.date.$lte = new Date(q.to);
+      if (q.to) {
+        // make 'to' inclusive by setting end of day
+        const toDate = new Date(q.to);
+        toDate.setHours(23, 59, 59, 999);
+        filter.date.$lte = toDate;
+      }
     }
 
     const allowedSort = { amount: 'amount', date: 'date', title: 'title', paidBy: 'paidBy', createdAt: 'createdAt' };
@@ -53,8 +66,12 @@ exports.getExpenses = async (req, res, next) => {
     const offset = (q.page - 1) * q.limit;
     const limit = q.limit;
 
-    const total = await Expense.countDocuments(filter);
-    const expenses = await Expense.find(filter).sort({ [sortField]: sortOrder }).skip(offset).limit(limit).lean();
+  const total = await Expense.countDocuments(filter);
+  // Apply case-insensitive collation so string sorts are alphabetical ignoring case
+  const query = Expense.find(filter).sort({ [sortField]: sortOrder }).skip(offset).limit(limit).lean();
+  // add collation for case-insensitive string sorting
+  query.collation({ locale: 'en', strength: 2 });
+  const expenses = await query.exec();
 
     res.json({ meta: { total, page: q.page, limit: q.limit }, data: expenses });
   } catch (err) {
