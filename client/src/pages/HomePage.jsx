@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import '../styles/HomePage.css';
+import preview from '../assets/app-Logo.jpg';
 
 export default function HomePage() {
   return (
@@ -14,7 +15,9 @@ export default function HomePage() {
           </div>
         </div>
         <div className="hero-right">
-          <div className="mockup">[App preview]</div>
+          <div className="mockup">  
+            <img src={preview} alt="App Logo" />
+</div>
         </div>
       </section>
 
