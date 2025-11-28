@@ -19,9 +19,11 @@ export default function Navbar() {
       <div className="nav-right">
         {user ? (
           <>
-            <span className="user-email">{user.name}</span>
+            <span className="user-email">{user.username || user.name}</span>
             <Link to="/dashboard" className="nav-link">Dashboard</Link>
             <Link to="/expenses" className="nav-link">Expenses</Link>
+            <Link to="/users" className="nav-link">Users</Link>
+            <Link to="/profile" className="nav-link">Profile</Link>
             <button onClick={handleLogout} className="btn">Logout</button>
           </>
         ) : (

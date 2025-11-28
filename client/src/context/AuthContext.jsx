@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { me as meApi, login as loginApi, signup as signupApi, logout as logoutApi } from '../api/auth.js';
 
@@ -38,7 +39,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, signup, logout, setUser }}>
       {children}
     </AuthContext.Provider>
   );

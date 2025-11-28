@@ -1,7 +1,9 @@
+/* global test, expect */
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
+/* eslint-env vitest */
 import SearchBar from '../SearchBar.jsx';
 
 test('search input and button work', () => {

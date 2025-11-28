@@ -4,6 +4,8 @@ import LoginPage from './pages/LoginPage.jsx';
 import SignupPage from './pages/SignupPage.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import ExpensesPage from './pages/ExpensesPage.jsx';
+import ProfilePage from './pages/ProfilePage.jsx';
+import UserSearchPage from './pages/UserSearchPage.jsx';
 import Navbar from './components/Navbar.jsx';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 
@@ -35,6 +37,22 @@ export default function App() {
           element={
             <ProtectedRoute>
               <ExpensesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute>
+              <UserSearchPage />
             </ProtectedRoute>
           }
         />
