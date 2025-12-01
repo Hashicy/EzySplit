@@ -4,6 +4,9 @@ import LoginPage from './pages/LoginPage.jsx';
 import SignupPage from './pages/SignupPage.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import ExpensesPage from './pages/ExpensesPage.jsx';
+import GroupsList from './pages/GroupsList.jsx';
+import CreateGroupPage from './pages/CreateGroupPage.jsx';
+import GroupPage from './pages/GroupPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
 import UserSearchPage from './pages/UserSearchPage.jsx';
 import Navbar from './components/Navbar.jsx';
@@ -53,6 +56,30 @@ export default function App() {
           element={
             <ProtectedRoute>
               <UserSearchPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/groups"
+          element={
+            <ProtectedRoute>
+              <GroupsList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/groups/new"
+          element={
+            <ProtectedRoute>
+              <CreateGroupPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/groups/:id"
+          element={
+            <ProtectedRoute>
+              <GroupPage />
             </ProtectedRoute>
           }
         />

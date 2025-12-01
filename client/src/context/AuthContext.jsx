@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { me as meApi, login as loginApi, signup as signupApi, logout as logoutApi } from '../api/auth.js';
+import { login as loginApi, signup as signupApi, logout as logoutApi } from '../api/auth.js';
+import { getMe as getMeApi } from '../api/users.js';
 
 const AuthContext = createContext(null);
 
@@ -10,9 +11,9 @@ export const AuthProvider = ({ children }) => {
 
   const bootstrap = async () => {
     try {
-      const { user } = await meApi();
-      setUser(user);
-    } catch {
+      const res = await getMeApi();
+      setUser(res.user);
+    } catch (e) {
       setUser(null);
     } finally {
       setLoading(false);
@@ -24,12 +25,15 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    const res = await loginApi(email, password);
+    await loginApi(email, password);
+    // refresh full user profile including followers/following
+    const res = await getMeApi();
     setUser(res.user);
   };
 
   const signup = async (name, email, password) => {
-    const res = await signupApi(name, email, password);
+    await signupApi(name, email, password);
+    const res = await getMeApi();
     setUser(res.user);
   };
 

@@ -22,6 +22,7 @@ export default function Navbar() {
             <span className="user-email">{user.username || user.name}</span>
             <Link to="/dashboard" className="nav-link">Dashboard</Link>
             <Link to="/expenses" className="nav-link">Expenses</Link>
+            <Link to="/groups" className="nav-link">Groups</Link>
             <Link to="/users" className="nav-link">Users</Link>
             <Link to="/profile" className="nav-link">Profile</Link>
             <button onClick={handleLogout} className="btn">Logout</button>

@@ -1,4 +1,5 @@
 const Expense = require('../models/Expense');
+const Group = require('../models/Group');
 const { minCashFlow } = require('../utils/settle');
 
 // Helper to parse query params for filtering/sorting/pagination
@@ -9,16 +10,49 @@ const parseQuery = (query) => {
 
 exports.createExpense = async (req, res, next) => {
   try {
-    const { title, amount, paidBy, category, date, participants } = req.body;
+    const { title, amount, paidBy, category, date, participants, groupId } = req.body;
     if (!title || !amount || !paidBy || !date) return res.status(400).json({ error: 'Missing required fields' });
+
+    let finalParticipants = Array.isArray(participants) ? participants.map(p => String(p)) : [];
+
+    // if groupId provided, validate group and membership and (if participants not provided)
+    if (groupId) {
+      const group = await Group.findById(groupId).lean();
+      if (!group) return res.status(400).json({ error: 'Invalid groupId' });
+      const requester = String(req.userId);
+      if (String(group.owner) !== requester && !(group.members || []).includes(requester)) {
+        return res.status(403).json({ error: 'Not a member of group' });
+      }
+
+      // If caller didn't pass participants, derive them from group members.
+      if (!finalParticipants.length) {
+        const membersRaw = (group.members || []).map(m => String(m));
+        const idLike = membersRaw.filter(m => /^[0-9a-fA-F]{24}$/.test(m));
+        const users = idLike.length ? await User.find({ _id: { $in: idLike } }).select('name username email').lean() : [];
+        const usersById = {};
+        users.forEach(u => { usersById[String(u._id)] = u; });
+        finalParticipants = membersRaw.map(m => {
+          if (/^[0-9a-fA-F]{24}$/.test(m)) {
+            const u = usersById[m];
+            return u ? (u.name || u.username || u.email) : m;
+          }
+          return m;
+        });
+      }
+    }
+
+    // ensure payer is included in participants
+    if (!finalParticipants.includes(paidBy)) finalParticipants.push(paidBy);
+
     const expense = await Expense.create({
       title,
       amount: Number(amount),
       paidBy,
       category,
       date: new Date(date),
-      participants: participants || [],
-      userId: req.userId
+      participants: finalParticipants,
+      userId: req.userId,
+      groupId: groupId || undefined
     });
     res.status(201).json({ expense });
   } catch (err) {

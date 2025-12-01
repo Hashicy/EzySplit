@@ -1,7 +1,12 @@
 import axios from 'axios';
 
+// Ensure we have a fallback to the API server when VITE_API_URL isn't set
+// Ensure we have a fallback to the API server when VITE_API_URL isn't set
+// Normalize: remove trailing slashes and any trailing '/api' so callers can safely prefix '/api/...'
+const raw = import.meta.env.VITE_API_URL || '';
+const base = (raw ? raw.replace(/\/+$/,'').replace(/\/api$/,'') : '')
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: base,
   withCredentials: true
 });
 

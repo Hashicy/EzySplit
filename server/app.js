@@ -4,6 +4,7 @@ const cookieParser = require('cookie-parser');
 const authRoutes = require('./src/routes/authRoutes');
 const expenseRoutes = require('./src/routes/expenseRoutes');
 const userRoutes = require('./src/routes/userRoutes');
+const groupRoutes = require('./src/routes/groupRoutes');
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.get('/api/health', (_, res) => res.json({ ok: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/groups', groupRoutes);
 
 // Basic error handler
 app.use((err, req, res, next) => {

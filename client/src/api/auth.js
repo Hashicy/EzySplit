@@ -7,6 +7,10 @@ const api = axios.create({
 });
 
 export const signup = async (name, email, password, username) => {
+  try {
+    const payload = { name, email, password, username };
+    console.debug('auth.signup -> POST', (api.defaults.baseURL || '') + '/auth/register', 'payload:', payload);
+  } catch (e) { /* ignore */ }
   const { data } = await api.post('/auth/register', { name, email, password, username });
   return data;
 };
@@ -17,6 +21,10 @@ export const updateProfile = async (payload) => {
 };
 
 export const login = async (email, password) => {
+  try {
+    const payload = { email, password };
+    console.debug('auth.login -> POST', (api.defaults.baseURL || '') + '/auth/login', 'payload:', payload);
+  } catch (e) { /* ignore */ }
   const { data } = await api.post('/auth/login', { email, password });
   return data;
 };

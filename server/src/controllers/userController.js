@@ -4,7 +4,6 @@ exports.searchUsers = async (req, res, next) => {
   try {
     const q = (req.query.q || '').trim();
     if (!q) {
-      // return a small sample of users when no query is provided
       const users = await User.find({}).limit(20).select('_id name username email');
       return res.json({ users });
     }
