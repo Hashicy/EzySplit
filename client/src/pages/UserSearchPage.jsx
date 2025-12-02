@@ -39,14 +39,14 @@ export default function UserSearchPage() {
 
   const toggleFollow = async (id, following) => {
     if (!user) {
-      if (window.confirm('You must be logged in to follow users. Go to login page?')) window.location.href = '/login';
+      // redirect to login without browser confirm dialog
+      navigate('/login', { state: { flash: 'Please login to follow users' } });
       return;
     }
-    if (following && !window.confirm('Unfollow this user?')) return;
     setLoadingMap(m => ({ ...m, [id]: true }));
     try {
-      if (following) await unfollowUser(id);
-      else await followUser(id);
+  if (following) await unfollowUser(id);
+  else await followUser(id);
       setResults(results.map(r => r._id === id ? { ...r, following: !following } : r));
     } catch (err) {
       console.error(err);

@@ -33,7 +33,6 @@ export default function GroupPage() {
   };
 
   const onRemove = async (member) => {
-    if (!window.confirm('Remove member?')) return;
     try {
       const res = await updateMembers(id, { remove: [member] });
       setGroup(res.group);
@@ -43,7 +42,6 @@ export default function GroupPage() {
   const navigate = useNavigate();
 
   const onDelete = async () => {
-    if (!window.confirm('Delete group and all its expenses?')) return;
     try {
       await deleteGroup(id);
       navigate('/groups');

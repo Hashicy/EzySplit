@@ -132,22 +132,24 @@ export default function ExpensesPage() {
   };
 
   const onEdit = (expense) => {
-    setEditingId(expense.id);
-    setForm({
-      title: expense.title || '',
-      amount: expense.amount || '',
-      paidBy: expense.paidBy || '',
-      category: expense.category || '',
-      date: expense.date ? expense.date.split('T')[0] : '',
-      participants: (expense.participants || []).join(', ')
-    });
-    // if expense has a group, select it
-    setSelectedGroupId(expense.groupId || '');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // toggle inline editing for this expense row
+    setEditingId(prev => (prev === (expense.id || expense._id) ? null : (expense.id || expense._id)));
+  };
+
+  const handleInlineSave = async (id, payload) => {
+    try {
+      await updateExpense(id, payload);
+      setFlash('Expense updated');
+      setEditingId(null);
+      load(1);
+    } catch (err) { console.error(err); }
+  };
+
+  const handleInlineCancel = () => {
+    setEditingId(null);
   };
 
   const onDelete = async (id) => {
-    if (!window.confirm('Delete this expense?')) return;
     try {
       await deleteExpense(id);
       setFlash('Expense deleted');
@@ -312,11 +314,11 @@ export default function ExpensesPage() {
           ) : (
             <ul>
               {expenses.map(exp => (
-                <li key={exp.id} className="expense-row">
-                  <ExpenseCard expense={exp} />
+                <li key={exp.id || exp._id} className="expense-row">
+                  <ExpenseCard expense={exp} isEditing={editingId === (exp.id || exp._id)} onSave={handleInlineSave} onCancelEdit={handleInlineCancel} />
                   <div className="actions">
-                    <button className="btn-edit" onClick={()=>onEdit(exp)}>Edit</button>
-                    <button className="btn-delete" onClick={()=>onDelete(exp.id)}>Delete</button>
+                    <button className="btn-edit" onClick={()=>onEdit(exp)}>{editingId === (exp.id || exp._id) ? 'Editing' : 'Edit'}</button>
+                    <button className="btn-delete" onClick={()=>onDelete(exp.id || exp._id)}>Delete</button>
                   </div>
                 </li>
               ))}
