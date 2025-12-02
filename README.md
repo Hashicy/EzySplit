@@ -117,46 +117,52 @@ API Overview
 ------------
 All endpoints return JSON. Protected routes require a valid JWT present in an HTTP-only cookie set by login.
 
-Authentication Endpoints
-- POST /api/auth/register
-  - Body: { name, email, password }
-  - Response: 201 { user }
-- POST /api/auth/login
-  - Body: { email, password }
-  - Response: 200 { user } and sets HTTP-only cookie
-- GET /api/auth/me
-  - Protected: returns current user
-- POST /api/auth/logout
-  - Clears cookie and ends session
+Auth (server: authRoutes.js, controller: authController.js; client wrappers: auth.js)
 
-Expense Endpoints
-- POST /api/expense
-  - Create a new expense
-  - Body example:
-    { title, amount, paidBy, participants: [string], category, date }
-- GET /api/expense
-  - Read list of expenses (supports search/filter/sort/pagination)
-  - Query params:
-    - search (string, matches title/category/paidBy)
-    - category (string)
-    - paidBy (string)
-    - from (ISO date)
-    - to (ISO date)
-    - sort (field, e.g. date, amount, title, createdAt)
-    - order (asc|desc)
-    - page (number)
-    - limit (number)
-  - Response example:
-    {
-      meta: { total: 42, page: 1, limit: 20 },
-      data: [ ...expenses ]
-    }
-- GET /api/expense/:id
-  - Read a single expense
-- PUT /api/expense/:id
-  - Update an expense (owner only)
-- DELETE /api/expense/:id
-  - Delete an expense (owner only)
+  - POST /api/auth/register — register (client: signup)
+  - POST /api/auth/login — login (client: login)
+  - POST /api/auth/refresh — refresh token (no client wrapper)
+  - GET /api/auth/me — get current user (protected) (client: me)
+  - POST /api/auth/logout — logout (protected) (client: logout)
+  - PUT /api/auth/me — update profile (client: updateProfile) — note: client calls PUT /auth/me in auth.js which resolves under the same mounted path
+
+
+Expenses (server: expenseRoutes.js, controller: expenseController.js; client wrappers: expenseApi.js)
+
+  - POST /api/expenses — create expense (client: createExpense)
+  - GET /api/expenses — list expenses (client: getExpenses)
+  - GET /api/expenses/:id — get single expense (client: getExpense)
+  - GET /api/expenses/:id/split — get split for an expense
+  - GET /api/expenses/summary/all/split — get summary split (client: getSummarySplit)
+  - PUT /api/expenses/:id — update expense (client: updateExpense)
+  - DELETE /api/expenses/:id — delete expense (client: deleteExpense)
+
+
+Users (server: userRoutes.js, controller: userController.js; client wrappers: users.js)
+
+  - GET /api/users/search — search users (public) (client: searchUsers, param q)
+  - GET /api/users/me — get current user (protected) (client: getMe)
+  - PUT /api/users/me — update current user (protected) (client: updateMe)
+  - GET /api/users/:id — get user by id (protected) (client: getUser)
+  - POST /api/users/:id/follow — follow user (protected) (client: followUser)
+  - POST /api/users/:id/unfollow — unfollow user (protected) (client: unfollowUser)
+
+
+Groups (server: groupRoutes.js, controller: groupController.js; client wrappers: groupApi.js)
+
+  - POST /api/groups — create group (protected) (client: createGroup)
+  - GET /api/groups — list my groups (protected) (client: listMyGroups)
+  - GET /api/groups/:id — get group by id (protected) (client: getGroup)
+  - GET /api/groups/:id/expenses — list expenses for group (protected) (client: getGroupExpenses)
+  - PUT /api/groups/:id/members — update group members (protected) (client: updateMembers)
+  - DELETE /api/groups/:id — delete group (protected) (client: deleteGroup)
+
+  
+Other server endpoints (from app.js)
+
+  - GET / — root health string "EzySplit API is running"
+  - GET /api/health — simple JSON health check { ok: true }
+
 
 Querying / Pagination / Sorting
 - Use ?page=1&limit=20&sort=date&order=desc&search=rent to combine operations.
